@@ -6,7 +6,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
-from scipy.signal import hilbert, chirp
+from scipy.signal import hilbert
 from math import e, pi
 
 time = {}
@@ -23,9 +23,8 @@ def prompt_for_input(description):
 
 
 # Model exponential function for fitting
-def func(x, w_1, w_2, t_1, t_2, a, b, c):
-    return a * (e**(-x / t_1)) * np.sin(w_1 * x) + b * (e**(
-        -x / t_2)) * np.sin(w_2 * x) + c
+def func(x, t_1, a, b):
+    return a * (e**(-x / t_1)) + b
 
 
 while True:
@@ -44,16 +43,17 @@ while True:
     y = np.abs(hilbert(y))
     plt.plot(x, y)
 
-    # Moving average of the Envelope Function
-    N = 100000
-    y = (np.convolve(np.ones((N, )) / N, y, mode='same'))
-    plt.plot(x, y, label='Moving Average')
+    # # Moving average of the Envelope Function
+    # N =
+    # y = (np.convolve(np.ones((N, )) / N, y, mode='same'))
+    # plt.plot(x, y, label='Moving Average')
 
     #Curve Fit of the Envelop Function
     popt, pcov = curve_fit(func, x, y)
-    print("w_1=", popt[0] / (2 * pi), "w_2=", popt[1] / (2 * pi), "t_1=",
-          popt[2], "t_2=", popt[3], "a=", popt[4], "b=", popt[5], "c=",
-          popt[6])
+    # print("w_1=", popt[0] / (2 * pi), "w_2=", popt[1] / (2 * pi), "t_1=",
+    #       popt[0], "t_2=", popt[3], "a=", popt[1], "b=", popt[5], "c=",
+    #       popt[6])
+    print("t_1=", popt[0], "a=", popt[1], "b=", popt[2])
 
     print("Decay Time= ", y[0] / e)
     plt.plot(x, func(x, *popt), label="Linear Regression")
