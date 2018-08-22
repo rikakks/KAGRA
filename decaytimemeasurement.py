@@ -3,6 +3,7 @@
 #Purpose: Curve fitting decay time strains for Excitations in KAGRA Type-B SR3 Oplev
 #         and measuring movement (Yaw-motion) of Test Mass.
 
+from os import listdir
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
@@ -22,42 +23,66 @@ def prompt_for_input(description):
             print("Please enter a valid input.")
 
 
-# Model exponential function for fitting
-def func(x, t_1, a, b):
-    return a * (e**(-x / t_1)) + b
-
-
-while True:
-    filename = prompt_for_input("name of file")
+# Showing all measurement files available and importing user-specified data file
+def import_data():
+    print("All files in directory: ")
+    for thing in listdir("Data/"):
+        print(thing)
+    filename = prompt_for_input("name of file to open")
     fp = "Data/" + filename
     time[filename], magnitude[filename] = np.transpose(np.genfromtxt(fp))
-    x = time[filename]
-    y = magnitude[filename]
+    return filename, time[filename], magnitude[filename]
 
-    plt.plot(x, y, label='Original Data')
-    plt.title("K1:VIS-SR3_TM_DAMP_Y_IN1_" + filename)
+
+# Plot Settings
+def plot_settings(filename):
+    plt.title(filename)
     plt.xlabel("Time [s]")
     plt.ylabel("Magnitude [μm]")
-
-    #Envelope function
-    y = np.abs(hilbert(y))
-    plt.plot(x, y)
-
-    # # Moving average of the Envelope Function
-    # N =
-    # y = (np.convolve(np.ones((N, )) / N, y, mode='same'))
-    # plt.plot(x, y, label='Moving Average')
-
-    #Curve Fit of the Envelop Function
-    popt, pcov = curve_fit(func, x, y)
-    # print("w_1=", popt[0] / (2 * pi), "w_2=", popt[1] / (2 * pi), "t_1=",
-    #       popt[0], "t_2=", popt[3], "a=", popt[1], "b=", popt[5], "c=",
-    #       popt[6])
-    print("t_1=", popt[0], "a=", popt[1], "b=", popt[2])
-
-    print("Decay Time= ", y[0] / e)
-    plt.plot(x, func(x, *popt), label="Linear Regression")
-
     plt.subplots_adjust(left=0.06, right=0.99)
-    plt.figure(figsize=(20, 10))
-    plt.show()
+    return
+
+
+def create_graph():
+    while True:
+        plt.plot(x_data, y_data, label='Measurement Data', color='#1e9cce')
+        plt.plot(x_data, y_env, label='Envelope Equation', color="#267777")
+
+        #Curve Fit of the Envelop Function
+        x_min = float(prompt_for_input("min x-value of curve fit"))
+        x_max = float(prompt_for_input("max x-value of curve fit"))
+        min_count = 0
+        while x_data[min_count] < x_min:
+            min_count += 1
+        max_count = min_count
+        while x_data[max_count] < x_max:
+            max_count += 1
+
+        # Model exponential function for fitting
+        def func(x, t_1, a, b):
+            return a * (e**(-(x - x_min) / t_1)) + b
+
+        popt, pcov = curve_fit(func, x_data[min_count:max_count],
+                               y_env[min_count:max_count])
+        print("Decay Time: ", popt[0], ", A/e = ", popt[1] / e)
+        print("(t_1=", popt[0], "a=", popt[1], "b=", popt[2], ")")
+
+        plt.plot(
+            x_data[min_count:max_count],
+            func(x_data[min_count:max_count], *popt),
+            label="Linear Regression",
+            color="#1a487c")
+        plot_settings(filename)
+        plt.show()
+
+
+# Initial Set-up: importing Data and plotting measurement graph
+filename, x_data, y_data = import_data()
+plt.plot(x_data, y_data, label='Measurement Data', color='#1e9cce')
+y_env = np.abs(hilbert(y_data))
+plt.plot(x_data, y_env, label='Envelope Equation', color="#267777")
+plot_settings(filename)
+plt.show()
+
+# Create Graph Adjusting to the User Preference
+create_graph()
