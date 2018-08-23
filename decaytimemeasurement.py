@@ -38,7 +38,7 @@ def import_data():
 def plot_settings(filename):
     plt.title(filename)
     plt.xlabel("Time [s]")
-    plt.ylabel("Magnitude [μm]")
+    plt.ylabel("Magnitude [μrad]")
     plt.subplots_adjust(left=0.06, right=0.99)
     return
 
